@@ -1,4 +1,3 @@
-// ignore_for_file: library_private_types_in_public_api
 import 'package:flutter/material.dart';
 
 void main() {
@@ -9,23 +8,30 @@ class Item {
   final int id;
   final String name;
   final String group;
+
   Item({required this.id, required this.name, required this.group});
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      title: 'Flutter List',
-      home: MyHomePage(),
+    return MaterialApp(
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
+
   @override
+  // ignore: library_private_types_in_public_api
   _MyHomePageState createState() => _MyHomePageState();
 }
 
@@ -49,12 +55,13 @@ class _MyHomePageState extends State<MyHomePage> {
           return ListTile(
             title: Text(items[index].name),
             subtitle: Text(items[index].group),
+            onTap: () {
+              _navigateToUpdateScreen(context, items[index]);
+            },
             trailing: IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () {
-                setState(() {
-                  items.remove(items[index]);
-                });
+                _showDeleteConfirmationDialog(context, items[index]);
               },
             ),
           );
@@ -69,6 +76,45 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  void _navigateToUpdateScreen(BuildContext context, Item item) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            UpdateItemScreen(item: item, updateItemList: updateItemList),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmationDialog(BuildContext context, Item item) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Item'),
+          content: Text('Are you sure you want to delete ${item.name}?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Delete'),
+              onPressed: () {
+                setState(() {
+                  items.remove(item);
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _showAddItemModal(BuildContext context) {
     TextEditingController idController = TextEditingController();
     TextEditingController nameController = TextEditingController();
@@ -77,7 +123,79 @@ class _MyHomePageState extends State<MyHomePage> {
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
-        return Column(
+        return Container(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              TextField(
+                controller: idController,
+                decoration: const InputDecoration(labelText: 'ID'),
+              ),
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Name'),
+              ),
+              TextField(
+                controller: groupController,
+                decoration: const InputDecoration(labelText: 'Group'),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  int id = int.tryParse(idController.text) ?? 0;
+                  String name = nameController.text;
+                  String group = groupController.text;
+
+                  setState(() {
+                    items.add(Item(id: id, name: name, group: group));
+                  });
+
+                  Navigator.pop(context);
+                },
+                child: const Text('Add Item'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void updateItemList(Item newItem) {
+    setState(() {
+      int index = items.indexWhere((item) => item.id == newItem.id);
+      if (index != -1) {
+        items[index] = newItem;
+      }
+    });
+  }
+}
+
+class UpdateItemScreen extends StatelessWidget {
+  final Item item;
+  final Function(Item) updateItemList;
+
+  const UpdateItemScreen(
+      {super.key, required this.item, required this.updateItemList});
+
+  @override
+  Widget build(BuildContext context) {
+    TextEditingController idController =
+        TextEditingController(text: item.id.toString());
+    TextEditingController nameController =
+        TextEditingController(text: item.name);
+    TextEditingController groupController =
+        TextEditingController(text: item.group);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Update Item'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             TextField(
               controller: idController,
@@ -94,21 +212,18 @@ class _MyHomePageState extends State<MyHomePage> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                int id = int.tryParse(idController.text) ?? 0;
+                int id = int.tryParse(idController.text) ?? item.id;
                 String name = nameController.text;
                 String group = groupController.text;
-
-                setState(() {
-                  items.add(Item(id: id, name: name, group: group));
-                });
-
+                Item updatedItem = Item(id: id, name: name, group: group);
+                updateItemList(updatedItem);
                 Navigator.pop(context);
               },
-              child: const Text('Add new friend'),
+              child: const Text('Update Item'),
             ),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 }
