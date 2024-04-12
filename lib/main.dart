@@ -69,7 +69,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          _showAddItemModal(context);
+          _showAddDialog();
         },
         child: const Icon(Icons.add),
       ),
@@ -115,23 +115,18 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void _showAddItemModal(BuildContext context) {
-    TextEditingController idController = TextEditingController();
+  void _showAddDialog() {
     TextEditingController nameController = TextEditingController();
     TextEditingController groupController = TextEditingController();
-
-    showModalBottomSheet(
+    TextEditingController idController = TextEditingController();
+    showDialog(
       context: context,
       builder: (BuildContext context) {
-        return Container(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
+        return AlertDialog(
+          title: const Text('Add Item'),
+          content: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              TextField(
-                controller: idController,
-                decoration: const InputDecoration(labelText: 'ID'),
-              ),
               TextField(
                 controller: nameController,
                 decoration: const InputDecoration(labelText: 'Name'),
@@ -140,23 +135,35 @@ class _MyHomePageState extends State<MyHomePage> {
                 controller: groupController,
                 decoration: const InputDecoration(labelText: 'Group'),
               ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  int id = int.tryParse(idController.text) ?? 0;
-                  String name = nameController.text;
-                  String group = groupController.text;
-
-                  setState(() {
-                    items.add(Item(id: id, name: name, group: group));
-                  });
-
-                  Navigator.pop(context);
-                },
-                child: const Text('Add Item'),
+              TextField(
+                controller: idController,
+                decoration: const InputDecoration(labelText: 'Id'),
               ),
             ],
           ),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Add'),
+              onPressed: () {
+                // Add item to the list
+                int id = items.length + 1;
+                String name = nameController.text;
+                String group = groupController.text;
+
+                setState(() {
+                  items.add(Item(id: id, name: name, group: group));
+                });
+
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
         );
       },
     );
@@ -193,7 +200,7 @@ class UpdateItemScreen extends StatelessWidget {
         title: const Text('Update Item'),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(0.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
